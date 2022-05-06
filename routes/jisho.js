@@ -9,7 +9,12 @@ let examples = require("../public/tatoeba-jp.json")
 
 router.get('/word/:query', function(req, res, next) {
   let query = req.params.query
-  let results = queryJisho(query, "includes")
+  let results = queryJE(query)
+  res.send(results) 
+});
+router.get('/test/:query', function(req, res, next) {
+  let query = req.params.query
+  let results = queryJE(query)
   res.send(results) 
 });
 
@@ -22,7 +27,7 @@ router.get("/example/:type/:query", function(req, res, next) {
   }
 })
 
-const queryJisho = (query) => {
+const queryJE = (query) => {
   let exact = []
   let includes = []
   let prefix = []
@@ -48,7 +53,18 @@ const queryJisho = (query) => {
         })
       })
     }
-
+    if(entry.sense && query.length > 2){
+      entry.sense.map(definitionListing => {
+        definitionListing.gloss.map(word => {
+          if(typeof word === "string"){
+            if (word === query && !exact.includes(entry)) exact = [...exact, entry]
+            if (word.includes(query) && !includes.includes(entry)) includes = [...includes, entry]
+            if (word.startsWith(query) && !prefix.includes(entry)) prefix = [...prefix, entry]
+            if (word.endsWith(query) && !suffix.includes(entry)) suffix = [...suffix, entry]
+          }
+        })
+      })
+    }
   })
   return {
     Exact: exact,
@@ -57,4 +73,5 @@ const queryJisho = (query) => {
     Suffix: suffix,
   }
 }
+
 module.exports = router;
